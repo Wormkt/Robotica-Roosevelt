@@ -1,0 +1,128 @@
+/* =========================================================================
+   PROJETO: Seguidor de Linha "Bang-Bang" (Alta Resposta)
+   AUTOR: Otimizado por Senna
+   HARDWARE: Arduino, L298N (ENA/ENB Jumpeados), 2x IR TCRT5000
+   ========================================================================= */
+
+// --- 1. Definições de Hardware (Mapeamento de Pinos) ---
+
+// Motor Esquerdo
+#define ENA 11  // Pino de velocidade (PWM) - NOVO
+#define IN1 10  // Pino de direção 1
+#define IN2 9   // Pino de direção 2
+
+// Motor Direito
+#define ENB 5   // Pino de velocidade (PWM) - NOVO
+#define IN3 7   // Pino de direção 3
+#define IN4 6   // Pino de direção 4
+
+// Sensores Infravermelhos (Leitura Digital Rápida)
+#define SENSOR_ESQ 3 // Sensor Esquerdo
+#define SENSOR_DIR 2 // Sensor Direito
+
+// --- 2. Parâmetros de Pista ---
+
+// IMPORTANTE: Teste seus sensores. 
+// Geralmente, ler a linha preta retorna HIGH (1) e o fundo branco LOW (0).
+// Se o comportamento for inverso, troque HIGH por LOW aqui.
+const int COR_DA_LINHA = HIGH; 
+
+// --- NOVO: Variáveis de Ajuste Fino (Telemetria) ---
+// Valores permitidos para o PWM vão de 0 (parado) a 255 (potência máxima)
+int velReta = 150;      // Velocidade de cruzeiro nas retas
+int velCurva = 100;     // Velocidade da roda de fora da curva (empurrando)
+int velReversa = -80;   // Velocidade da roda de dentro (negativa para frear/inverter e fazer curvas fechadas)
+
+// --- 3. Inicialização (Setup) ---
+void setup() {
+  // Configurando os pinos da Ponte H como SAÍDA
+  pinMode(ENA, OUTPUT); 
+  pinMode(ENB, OUTPUT); 
+  pinMode(IN1, OUTPUT); 
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); 
+  pinMode(IN4, OUTPUT);
+  
+  // Configurando os sensores IR como ENTRADA
+  pinMode(SENSOR_ESQ, INPUT);
+  pinMode(SENSOR_DIR, INPUT);
+
+  // Garante que o robô inicie com os motores travados
+  pararMotores();
+
+  // TEMPO DE LARGADA:
+  
+  // de ligar a chave de energia e posicionar o robô na linha.
+  delay(3000); 
+}
+
+// --- 4. Loop Principal (O Cérebro) ---
+
+void loop() {
+  
+  // Leitura direta dos sensores
+  bool leituraEsq = digitalRead(SENSOR_ESQ);
+  bool leituraDir = digitalRead(SENSOR_DIR);
+
+  // ESTADO 1: Ambos os sensores fora da linha (fundo branco).
+  // AÇÃO: Aceleração de cruzeiro à frente.
+  if (leituraEsq != COR_DA_LINHA && leituraDir != COR_DA_LINHA) {
+    controlarMotores(velReta, velReta);
+  }
+  
+  // ESTADO 2: Sensor ESQUERDO detectou a linha. O robô está saindo pela direita.
+  // AÇÃO: Roda direita acelera, roda esquerda entra em reverso (Giro para a esquerda).
+  else if (leituraEsq == COR_DA_LINHA && leituraDir != COR_DA_LINHA) {
+    controlarMotores(velReversa, velCurva); 
+  }
+  
+  // ESTADO 3: Sensor DIREITO detectou a linha. O robô está saindo pela esquerda.
+  // AÇÃO: Roda esquerda acelera, roda direita entra em reverso (Giro para a direita).
+  else if (leituraEsq != COR_DA_LINHA && leituraDir == COR_DA_LINHA) {
+    controlarMotores(velCurva, velReversa);
+  }
+  
+  // ESTADO 4: Ambos detectam a linha (Cruzamento ou linha de chegada).
+  // AÇÃO: Freio motor nas duas rodas.
+  else if (leituraEsq == COR_DA_LINHA && leituraDir == COR_DA_LINHA) {
+    controlarMotores(0, 0); 
+  }
+}
+
+// --- 5. Funções de Controle Dinâmico ---
+
+// Valores positivos vão para frente, valores negativos invertem o motor.
+// Valor 0 aciona o Freio Motor.
+
+void controlarMotores(int velocidadeEsq, int velocidadeDir) {
+  
+  // --- LÓGICA DO MOTOR ESQUERDO ---
+  if (velocidadeEsq > 0) {
+    digitalWrite(IN1, HIGH); 
+    digitalWrite(IN2, LOW);
+  } else if (velocidadeEsq < 0) {
+    digitalWrite(IN1, LOW); 
+    digitalWrite(IN2, HIGH);
+    velocidadeEsq = -velocidadeEsq; // Transforma o negativo em positivo para o analogWrite entender
+  } else {
+    // Freio motor instantâneo
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, HIGH);
+  }
+  analogWrite(ENA, velocidadeEsq);
+
+  // --- LÓGICA DO MOTOR DIREITO ---
+  if (velocidadeDir > 0) {
+    digitalWrite(IN3, HIGH); 
+    digitalWrite(IN4, LOW);
+  } else if (velocidadeDir < 0) {
+    digitalWrite(IN3, LOW); 
+    digitalWrite(IN4, HIGH);
+    velocidadeDir = -velocidadeDir; // Transforma o negativo em positivo para o analogWrite entender
+  } else {
+    // Freio motor instantâneo
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, HIGH);
+  }
+  analogWrite(ENB, velocidadeDir);
+}
