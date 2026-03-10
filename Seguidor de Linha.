@@ -30,7 +30,7 @@ const int COR_DA_LINHA = HIGH;
 // --- NOVO: Variáveis de Ajuste Fino (Telemetria) ---
 // Valores permitidos para o PWM vão de 0 (parado) a 255 (potência máxima)
 int velReta = 150;      // Velocidade de cruzeiro nas retas
-int velCurva = 100;     // Velocidade da roda de fora da curva (empurrando)
+int velCurva = ;  velReta * 0.3;    // Velocidade da roda de fora da curva (empurrando)
 int velReversa = -80;   // Velocidade da roda de dentro (negativa para frear/inverter e fazer curvas fechadas)
 
 // --- 3. Inicialização (Setup) ---
