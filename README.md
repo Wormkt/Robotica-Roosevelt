@@ -1,2 +1,6 @@
-# Robotica-Roosevelt
-Instruções para os carrinhos
+# Robotica Roosevelt
+
+## Conteúdo:
+
+* Sensores [INFRAVERMELHO];
+* Carrinhos seguidores de Linha [Sigma];
