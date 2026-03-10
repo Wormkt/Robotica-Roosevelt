@@ -1,0 +1,42 @@
+/* =========================================================================
+   PROJETO: Teste de Telemetria dos Sensores IR (TCRT5000)
+   AUTOR: Senna
+   OBJETIVO: Isolar a leitura dos sensores e exibir no Monitor Serial.
+   ========================================================================= */
+
+// --- 1. Definições de Hardware (Mapeamento de Pinos) ---
+// Usando as mesmas portas do seu projeto principal
+#define SENSOR_ESQ 3 // Sensor Esquerdo
+#define SENSOR_DIR 2 // Sensor Direito
+
+void setup() {
+  // Inicia a comunicação de rádio com o computador (9600 baud rate)
+  Serial.begin(9600);
+  
+  // Configurando os sensores IR como ENTRADA
+  pinMode(SENSOR_ESQ, INPUT);
+  pinMode(SENSOR_DIR, INPUT);
+
+  // Mensagem inicial de checklist
+  Serial.println("=========================================");
+  Serial.println("  SISTEMA DE TELEMETRIA INICIADO");
+  Serial.println("=========================================");
+  Serial.println("Passe os sensores sobre o BRANCO e o PRETO.");
+  delay(2000); // Aguarda 2 segundos para você ler a mensagem
+}
+
+void loop() {
+  // 1. Faz a leitura em tempo real
+  int leituraEsq = digitalRead(SENSOR_ESQ);
+  int leituraDir = digitalRead(SENSOR_DIR);
+
+  // 2. Imprime os resultados no painel (Monitor Serial)
+  Serial.print("Sensor ESQ (Pino 3): ");
+  Serial.print(leituraEsq);
+  
+  Serial.print("   |   Sensor DIR (Pino 2): ");
+  Serial.println(leituraDir); // println quebra a linha para a próxima leitura
+
+  // 3. Delay de 250 milissegundos para os números não passarem voando na tela
+  delay(250); 
+}
